@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roster Generator - Penataan Roster Modern</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">
+        <h1 id="app-title">Roster Management System</h1>
+        <span id="site-label">CK BMB - Sitarum • Operational Roster</span>
+      </div>
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="month-selector">
+      <button class="nav-btn" id="btn-prev-month" title="Bulan Sebelumnya">◀</button>
+      <div class="current-month-display" id="month-display">Oktober 2026</div>
+      <button class="nav-btn" id="btn-next-month" title="Bulan Berikutnya">▶</button>
+      <button class="nav-btn" id="btn-jump-month" title="Pilih Bulan & Tahun">📅</button>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="nav-actions">
+      <!-- Role Indicator & Toggle -->
+      <div class="role-badge guest" id="role-badge" title="Status Akses Saat Ini">
+        <span class="role-dot" id="role-dot"></span>
+        <span id="role-text">Guest (Hanya Lihat)</span>
+      </div>
+      <button class="btn btn-secondary" id="btn-toggle-role" title="Beralih antara Mode Guest dan Admin">
+        <span id="btn-role-icon">🔐</span> <span id="btn-role-text">Login Admin</span>
+      </button>
+
+      <!-- Admin Actions (Hidden in Guest Mode) -->
+      <button class="btn btn-amber admin-only" id="btn-open-generate" title="Generate Jadwal Otomatis Sampai Akhir Tahun">
+        <span>⚡</span> Auto-Generate
+      </button>
+      <button class="btn btn-primary admin-only" id="btn-open-off-schedule" title="Atur Rentang Hari OFF Teman-Teman (Kecuali Night Shift)">
+        <span>🏖️</span> Atur Hari OFF
+      </button>
+      <button class="btn btn-secondary admin-only" id="btn-open-swap" title="Tukar Shift Antar Karyawan">
+        <span>🔄</span> Tukar Shift
+      </button>
+      <button class="btn btn-secondary admin-only" id="btn-open-leave" title="Input Cuti atau Field Break">
+        <span>🏖️</span> Cuti / FB
+      </button>
+      <button class="btn btn-secondary admin-only" id="btn-open-employees" title="Kelola Karyawan & Pola">
+        <span>👥</span> Karyawan
+      </button>
+      <button class="btn btn-secondary admin-only" id="btn-open-change-pin" title="Ubah PIN / Password Admin">
+        <span>🔑</span> Ubah PIN
+      </button>
+      
+      <!-- Export available for both Guest and Admin -->
+      <button class="btn btn-success" id="btn-export-excel" title="Download Excel Sesuai Template Resmi">
+        <span>📥</span> Export Excel
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="main-container">
+
+    <!-- KPI Metric Cards -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-icon indigo">👥</div>
+        <div class="kpi-details">
+          <div class="kpi-label">Total Karyawan</div>
+          <div class="kpi-value" id="kpi-total-emp">5 Orang</div>
+          <div class="kpi-sub" id="kpi-emp-sub">4 Counterman, 1 Analyst</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon amber">⏱️</div>
+        <div class="kpi-details">
+          <div class="kpi-label">Total Jam Lembur Tim</div>
+          <div class="kpi-value" id="kpi-total-ot">0 Jam</div>
+          <div class="kpi-sub">Shift D & N (+3 Jam/hari)</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon emerald" id="kpi-manning-icon">🛡️</div>
+        <div class="kpi-details">
+          <div class="kpi-label">Status Standby Counterman</div>
+          <div class="kpi-value" id="kpi-manning-status" style="font-size: 1.15rem;">Checking...</div>
+          <div class="kpi-sub" id="kpi-manning-sub">Syarat Standby: Min. 2 Orang/Hari</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon rose">🔄</div>
+        <div class="kpi-details">
+          <div class="kpi-label">Pola Roster Aktif</div>
+          <div class="kpi-value" style="font-size: 1.1rem;">5:2 & 15D Malam</div>
+          <div class="kpi-sub">Auto-cycle matematis</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shift Quick Palette & Brush Toolbar -->
+    <section class="palette-toolbar">
+      <div class="palette-left">
+        <span class="palette-label">Pilih Shift:</span>
+        <div class="shift-chip chip-d" data-shift="D" title="Day Shift (06.00 - 18.00) • Lembur 3 Jam">
+          <span>D</span> Day Shift (+3h)
+        </div>
+        <div class="shift-chip chip-dn" data-shift="DN" title="Day Normal (06.00 - 15.00) • Reguler">
+          <span>DN</span> Day Normal
+        </div>
+        <div class="shift-chip chip-n" data-shift="N" title="Night Shift (18.00 - 06.00) • Lembur 3 Jam">
+          <span>N</span> Night (+3h)
+        </div>
+        <div class="shift-chip chip-off" data-shift="OFF" title="Hari Libur / Istirahat">
+          <span>OFF</span> Libur
+        </div>
+        <div class="shift-chip chip-fb" data-shift="FB" title="Field Break / Roster Off">
+          <span>FB</span> Field Break
+        </div>
+        <div class="shift-chip chip-ct" data-shift="CT" title="Cuti Resmi / Tahunan">
+          <span>CT</span> Cuti
+        </div>
+      </div>
+
+      <div class="palette-right">
+        <div class="keyboard-hint">
+          <span>💡 <b>Tips Cepat:</b> Klik sel untuk ganti, atau klik shift di atas untuk mengaktifkan <b>Kuas Cat</b></span>
+        </div>
+        <button class="btn btn-secondary" id="btn-clear-brush" style="display: none; padding: 4px 10px; font-size: 0.75rem;">
+          ❌ Nonaktifkan Kuas
+        </button>
+      </div>
+    </section>
+
+    <!-- Roster Grid Matrix Card -->
+    <section class="matrix-card">
+      <div class="table-responsive">
+        <table class="roster-table" id="roster-table">
+          <thead id="roster-thead">
+            <!-- Dynamic Headers injected by JS -->
+          </thead>
+          <tbody id="roster-tbody">
+            <!-- Dynamic Rows injected by JS -->
+          </tbody>
+          <tfoot id="roster-tfoot">
+            <!-- Dynamic Daily Standby & Stats injected by JS -->
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Quick Shift Popover (Appears on cell click) -->
+  <div class="shift-popover" id="cell-popover" style="display: none;">
+    <button class="popover-btn" data-shift="D" style="background: var(--shift-d-bg); color: #fff;">D</button>
+    <button class="popover-btn" data-shift="DN" style="background: var(--shift-dn-bg); color: #fff;">DN</button>
+    <button class="popover-btn" data-shift="N" style="background: var(--shift-n-bg); color: #fff;">N</button>
+    <button class="popover-btn" data-shift="OFF" style="background: var(--shift-off-bg); color: #fff;">OFF</button>
+    <button class="popover-btn" data-shift="FB" style="background: var(--shift-fb-bg); color: #111;">FB</button>
+    <button class="popover-btn" data-shift="CT" style="background: var(--shift-ct-bg); color: #fff;">CT</button>
+  </div>
+
+  <!-- Modal: Tukar Shift -->
+  <div class="modal-overlay" id="modal-swap">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><span>🔄</span> Asisten Tukar Shift</h3>
+        <button class="modal-close" data-close="modal-swap">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Pilih tanggal dan 2 personil yang ingin saling bertukar shift. Sistem akan otomatis memvalidasi ketersediaan standby.
+        </p>
+        <div class="form-group">
+          <label>Tanggal Pertukaran:</label>
+          <input type="date" class="form-control" id="swap-date">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Karyawan 1:</label>
+            <select class="form-control" id="swap-emp1"></select>
+            <div id="swap-preview1" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">-</div>
+          </div>
+          <div class="form-group">
+            <label>Karyawan 2:</label>
+            <select class="form-control" id="swap-emp2"></select>
+            <div id="swap-preview2" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">-</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Alasan Pertukaran (Opsional):</label>
+          <input type="text" class="form-control" id="swap-reason" placeholder="Contoh: Tukar jaga personal / keperluan keluarga">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-swap">Batal</button>
+        <button class="btn btn-primary" id="btn-submit-swap">Tukar Shift Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Atur Hari OFF Teman-Teman -->
+  <div class="modal-overlay" id="modal-off-schedule">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3><span>🏖️</span> Atur Hari OFF Teman-Teman</h3>
+        <button class="modal-close" data-close="modal-off-schedule">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Night Shift Safe Badge -->
+        <div style="background: rgba(249, 115, 22, 0.12); border: 1px solid rgba(249, 115, 22, 0.35); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="font-size: 0.82rem; color: #fed7aa;">
+            <b style="color: #fb923c;">🌙 Night Shift (Muhammad Riski):</b> Tetap otomatis mengikuti rotasi 15 hari (5 Siang - 2 OFF - 5 Malam - 3 OFF) dan tidak akan terubah.
+          </div>
+          <span style="background: rgba(249, 115, 22, 0.25); color: #fdba74; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; border: 1px solid rgba(249, 115, 22, 0.4);">
+            🔒 Terkunci Aman
+          </span>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+          Pilih personil shift siang dan tentukan rentang tanggal untuk menetapkan hari libur (OFF) atau mengubahnya kembali menjadi kerja (D).
+        </p>
+
+        <div class="form-group">
+          <label>Pilih Personil Shift Siang:</label>
+          <select class="form-control" id="off-emp-select">
+            <!-- Injected by JS: Non-night shift personnel only -->
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Mulai:</label>
+            <input type="date" class="form-control" id="off-start-date">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Selesai:</label>
+            <input type="date" class="form-control" id="off-end-date">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tindakan Jadwal:</label>
+          <select class="form-control" id="off-action-select">
+            <option value="OFF" selected>🔴 Jadikan Hari OFF (Libur / Istirahat)</option>
+            <option value="D">🟢 Jadikan Hari Kerja D (Day Shift Standby)</option>
+            <option value="RESET">🔄 Hapus Penyesuaian (Kembalikan ke Default Siklus)</option>
+          </select>
+        </div>
+
+        <!-- Optional Weekday Filter Checkboxes -->
+        <div class="form-group" style="background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 12px;">
+          <label style="display: block; font-size: 0.82rem; margin-bottom: 6px; color: #cbd5e1;">
+            🎯 Filter Hari Tertentu Dalam Rentang Tanggal (Opsional):
+          </label>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" class="off-weekday" value="0"> Sn
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" class="off-weekday" value="1"> Sl
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" class="off-weekday" value="2"> Rb
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" class="off-weekday" value="3"> Km
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" class="off-weekday" value="4"> Jm
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #f87171; font-weight: 600;">
+              <input type="checkbox" class="off-weekday" value="5"> Sb
+            </label>
+            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #f87171; font-weight: 600;">
+              <input type="checkbox" class="off-weekday" value="6"> Mg
+            </label>
+          </div>
+          <small style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 4px;">
+            *Biarkan semua tidak dicentang jika ingin menerapkan ke <b>setiap hari berturut-turut</b> dalam rentang tanggal.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Keterangan / Alasan:</label>
+          <input type="text" class="form-control" id="off-reason-input" placeholder="Contoh: Off Roster November, Off Bergantian">
+        </div>
+
+        <!-- Live Summary of Non-Night Shift Personnel in active month -->
+        <div style="margin-top: 10px;">
+          <label style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 6px; display: block;">
+            📊 Rekap Hari OFF Bulan Terpilih (<span id="off-month-label">Bulan Ini</span>):
+          </label>
+          <div id="off-summary-container" style="max-height: 140px; overflow-y: auto; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px 12px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-off-schedule">Batal</button>
+        <button class="btn btn-primary" id="btn-submit-off-schedule">Terapkan Jadwal OFF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Input Cuti / Field Break -->
+  <div class="modal-overlay" id="modal-leave">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><span>🏖️</span> Input Cuti & Field Break</h3>
+        <button class="modal-close" data-close="modal-leave">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Terapkan cuti atau field break untuk rentang tanggal tertentu sekaligus.
+        </p>
+        <div class="form-group">
+          <label>Pilih Karyawan:</label>
+          <select class="form-control" id="leave-emp"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Mulai:</label>
+            <input type="date" class="form-control" id="leave-start-date">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Selesai:</label>
+            <input type="date" class="form-control" id="leave-end-date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Jenis Izin / Istirahat:</label>
+          <select class="form-control" id="leave-type">
+            <option value="CT">CT - Cuti Resmi / Tahunan</option>
+            <option value="FB">FB - Field Break</option>
+            <option value="OFF">OFF - Hari Libur Tambahan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan / Alasan:</label>
+          <input type="text" class="form-control" id="leave-reason" placeholder="Contoh: Cuti Tahunan, Pulang Site Sitarum">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-leave">Batal</button>
+        <button class="btn btn-primary" id="btn-submit-leave">Terapkan Jadwal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Auto-Generate Sampai Akhir Tahun -->
+  <div class="modal-overlay" id="modal-generate">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><span>⚡</span> Auto-Generate Roster Multi-Bulan</h3>
+        <button class="modal-close" data-close="modal-generate">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Fitur ini akan memproyeksikan pola kerja siklus (5:2 dan Rotasi Malam 15 hari) seluruh karyawan secara otomatis hingga akhir tahun atau bulan yang Anda pilih.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dari Bulan:</label>
+            <select class="form-control" id="gen-start-month">
+              <option value="10">Oktober 2026</option>
+              <option value="11">November 2026</option>
+              <option value="12">Desember 2026</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sampai Bulan:</label>
+            <select class="form-control" id="gen-end-month">
+              <option value="12" selected>Desember 2026 (Akhir Tahun)</option>
+              <option value="6">Juni 2027 (Pertengahan Tahun Depan)</option>
+              <option value="12">Desember 2027 (1 Tahun Penuh Depan)</option>
+            </select>
+          </div>
+        </div>
+        <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 12px; font-size: 0.82rem; color: #c7d2fe;">
+          ℹ️ <b>Hasil Proyeksi:</b> Seluruh jadwal bulan mendatang akan terisi rapi sesuai rotasi. Anda tetap bisa mengubah manual atau menukar shift kapan saja setelahnya.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-generate">Batal</button>
+        <button class="btn btn-amber" id="btn-submit-generate">⚡ Mulai Generate Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Kelola Karyawan -->
+  <div class="modal-overlay" id="modal-employees">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3><span>👥</span> Kelola Karyawan & Pola Rotasi</h3>
+        <button class="modal-close" data-close="modal-employees">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 0.95rem;">Daftar Personil Terdaftar</h4>
+          <button class="btn btn-primary" id="btn-add-emp-form" style="padding: 4px 10px; font-size: 0.8rem;">+ Tambah Personil</button>
+        </div>
+
+        <!-- Form Tambah Personil Baru (Toggle via + Tambah Personil) -->
+        <div id="add-emp-form" style="display: none; background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-top: 4px;">
+          <h5 style="font-size: 0.85rem; color: #fbbf24; margin-bottom: 8px;">➕ Form Tambah Personil Baru</h5>
+          <div class="form-row" style="margin-bottom: 8px;">
+            <div class="form-group">
+              <label>Nama Lengkap:</label>
+              <input type="text" class="form-control" id="new-emp-name" placeholder="Contoh: Budi Santoso">
+            </div>
+            <div class="form-group">
+              <label>NRP / SN:</label>
+              <input type="text" class="form-control" id="new-emp-sn" placeholder="Contoh: 10004512">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-group">
+              <label>Posisi:</label>
+              <select class="form-control" id="new-emp-position">
+                <option value="Counterman" selected>Counterman</option>
+                <option value="Part Analyst">Part Analyst</option>
+                <option value="Warehouse Staff">Warehouse Staff</option>
+                <option value="Admin Logistik">Admin Logistik</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Pola Rotasi:</label>
+              <select class="form-control" id="new-emp-pattern">
+                <option value="regular_5_2" selected>Reguler 5:2 (Shift Siang D)</option>
+                <option value="night_rotation_15">Rotasi Malam 15 Hari (5 Siang - 2 OFF - 5 Malam - 3 OFF)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-add-emp">Batal</button>
+            <button class="btn btn-primary btn-sm" id="btn-save-new-emp">Simpan Personil</button>
+          </div>
+        </div>
+
+        <div id="emp-list-container" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-reset-sample" style="margin-right: auto; color: #f87171;">
+          ↺ Reset ke Data Contoh
+        </button>
+        <button class="btn btn-primary" data-close="modal-employees">Selesai</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Login Admin -->
+  <div class="modal-overlay" id="modal-login">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3><span>🔐</span> Masuk Sebagai Admin</h3>
+        <button class="modal-close" data-close="modal-login">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Masukkan PIN Admin untuk membuka fitur edit roster, tukar shift, input cuti, dan manajemen karyawan.
+        </p>
+        <div class="form-group">
+          <label>PIN Admin:</label>
+          <input type="password" class="form-control" id="admin-pin-input" placeholder="Masukkan PIN Admin..." autocomplete="current-password" autofocus>
+        </div>
+        <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 8px 12px; font-size: 0.78rem; color: #cbd5e1;">
+          💡 <i>PIN Default:</i> <b style="color: #fbbf24;">admin123</b>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-login">Batal</button>
+        <button class="btn btn-primary" id="btn-submit-login">Masuk Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ubah PIN Admin -->
+  <div class="modal-overlay" id="modal-change-pin">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3><span>🔑</span> Ubah PIN Admin</h3>
+        <button class="modal-close" data-close="modal-change-pin">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+          Ganti PIN Admin untuk mengamankan akses pengaturan jadwal & kelola karyawan.
+        </p>
+        <div class="form-group">
+          <label>PIN Lama Saat Ini:</label>
+          <input type="password" class="form-control" id="change-pin-old" placeholder="Masukkan PIN saat ini..." autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label>PIN Baru (Minimal 4 Karakter):</label>
+          <input type="password" class="form-control" id="change-pin-new" placeholder="Masukkan PIN baru..." autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Konfirmasi PIN Baru:</label>
+          <input type="password" class="form-control" id="change-pin-confirm" placeholder="Ulangi PIN baru..." autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modal-change-pin">Batal</button>
+        <button class="btn btn-primary" id="btn-submit-change-pin">Simpan PIN Baru</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JavaScript Application -->
+  <script src="js/app.js"></script>
+</body>
+</html>
